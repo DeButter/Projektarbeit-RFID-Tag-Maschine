@@ -31,11 +31,42 @@ REMOTE_SCRIPT_DIR = "/home/beat/Documents"  # z.B. links_drehen.py, rechts_drehe
 
 # PyAutoGUI Settings
 pyautogui.FAILSAFE = False     # Fail-Safe deaktivieren (sonst Abbruch bei Maus oben/links)
-pyautogui.PAUSE = 1.0         # gemächlich tippen
+pyautogui.PAUSE = 1.0     
+#pyautogui.PAUSE = None    # gemächlich tippen
 
 # =========================
 # Hilfsfunktionen
 # =========================
+
+# ---- SSH-Helfer ----
+def ssh_run(client: paramiko.SSHClient, script_name: str):
+    """Führt ein Python-Skript auf dem Raspberry Pi aus."""
+    if not client:
+        print("Kein SSH-Client verfügbar.")
+        return
+    try:
+        cmd = f"python3 {REMOTE_SCRIPT_DIR}/{script_name}"
+        stdin, stdout, stderr = client.exec_command(cmd)
+        out = stdout.read().decode('utf-8', errors='ignore').strip()
+        err = stderr.read().decode('utf-8', errors='ignore').strip()
+        if out:
+            print(f"[SSH OUT] {out}")
+        if err:
+            print(f"[SSH ERR] {err}")
+    except Exception as e:
+        print(f"SSH-Ausführung fehlgeschlagen ({script_name}): {e}")
+
+def ssh_connect():
+    """Stellt eine SSH-Verbindung zum Raspberry Pi her und gibt den Client zurück (oder None)."""
+    try:
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect(hostname=RASPI_HOST, username=RASPI_USER, password=RASPI_PASS, timeout=6)
+        print(f"SSH verbunden: {RASPI_USER}@{RASPI_HOST}")
+        return client
+    except Exception as e:
+        print(f"SSH-Verbindung fehlgeschlagen: {e}")
+        return None
 
 def find_and_focus_window(preferred_title=None, retries=25, sleep_between=0.4):
     """
@@ -80,67 +111,6 @@ def find_and_focus_window(preferred_title=None, retries=25, sleep_between=0.4):
         time.sleep(sleep_between)
     return None
 
-def run_selection_sequence(selection: str):
-    """Tastenabfolge für den gewählten Reagenztyp (Stil wie im Screenshot)."""
-    sel = selection.strip()
-    if sel == "Washbuffer":
-        pyautogui.press('enter')
-        pyautogui.press('tab', presses=7)
-        pyautogui.press('down', presses=6)
-        pyautogui.press('enter')
-        pyautogui.press('tab', presses=4)
-        pyautogui.press('down', presses=6)
-        pyautogui.press('enter')
-        pyautogui.press('down', presses=6)
-        pyautogui.press('down', presses=6)
-    elif sel == "Lysis":
-        pyautogui.press('enter')
-        pyautogui.press('tab', presses=7)
-        pyautogui.press('down', presses=3)
-        pyautogui.press('enter')
-    elif sel == "Diluent":
-        pyautogui.press('enter')
-        pyautogui.press('tab', presses=7)
-        pyautogui.press('down', presses=2)
-        pyautogui.press('enter')
-    elif sel == "CMR +":
-        pyautogui.press('enter')
-        pyautogui.press('tab', presses=7)
-        pyautogui.press('down', presses=1)
-        pyautogui.press('enter')
-    elif sel == "CMR -":
-        pyautogui.press('enter')
-        pyautogui.press('tab', presses=7)
-        pyautogui.press('enter')
-    elif sel == "MGP":
-        pyautogui.press('enter')
-        pyautogui.press('tab', presses=7)
-        pyautogui.press('down', presses=4)
-        pyautogui.press('enter')
-    elif sel == "Reagent":
-        pyautogui.press('enter')
-        pyautogui.press('tab', presses=7)
-        pyautogui.press('down', presses=5)
-        pyautogui.press('enter')
-    else:
-        print(f"Unbekannte Option: {sel}")
-
-def run_repeated_tab_enter(n: int):
-    """Wiederholt n-mal: Tab → Enter → Tab → Enter."""
-    for _ in range(n):
-        pyautogui.press('tab')
-        pyautogui.press('enter')
-        pyautogui.press('tab')
-        pyautogui.press('enter')
-
-# ---- Platzhalter für deine weiteren Start-Schritte ----
-
-def reader_auswaehlen():
-    """TODO: Eigene Tastenabfolge für 'Reader auswählen' hier einsetzen."""
-    # Beispiel (löschen/ersetzen):
-    # pyautogui.press('tab', presses=3)
-    # pyautogui.press('enter')
-    pass
 
 def reader_oeffnen_sequence():
     """Deine Sequenz direkt nach dem Fensterausrichten:
@@ -153,48 +123,84 @@ def reader_oeffnen_sequence():
     pyautogui.press('tab', presses=11, interval=0.08)
     pyautogui.press('enter')
 
-def antenne_auswaehlen():
-    """TODO: Eigene Tastenabfolge für 'Antenne auswählen' hier einsetzen."""
-    # Beispiel (löschen/ersetzen):
-    # pyautogui.press('tab', presses=2)
-    # pyautogui.press('enter')
-    pass
 
-# ---- SSH-Helfer ----
+def run_selection_sequence(selection: str):
+    """Tastenabfolge für den gewählten Reagenztyp (Stil wie im Screenshot)."""
+    sel = selection.strip()
+    if sel == "Washbuffer":
+        pyautogui.press('right', presses=9) 
+        pyautogui.press('enter')
+        pyautogui.press('tab', presses=7)
+        pyautogui.press('down', presses=6)
+        pyautogui.press('enter')
+        pyautogui.press('tab', presses=16)
+        
 
-def ssh_connect():
-    """Stellt eine SSH-Verbindung zum Raspberry Pi her und gibt den Client zurück (oder None)."""
-    try:
-        client = paramiko.SSHClient()
-        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        client.connect(hostname=RASPI_HOST, username=RASPI_USER, password=RASPI_PASS, timeout=6)
-        print(f"SSH verbunden: {RASPI_USER}@{RASPI_HOST}")
-        return client
-    except Exception as e:
-        print(f"SSH-Verbindung fehlgeschlagen: {e}")
-        return None
+    elif sel == "Lysis":
+        pyautogui.press('right', presses=9) 
+        pyautogui.press('enter')
+        pyautogui.press('tab', presses=7)
+        pyautogui.press('down', presses=3)
+        pyautogui.press('enter')
+        pyautogui.press('tab', presses=16)
 
-def ssh_run(client: paramiko.SSHClient, script_name: str):
-    """Führt ein Python-Skript auf dem Raspberry Pi aus."""
-    if not client:
-        print("Kein SSH-Client verfügbar.")
-        return
-    try:
-        cmd = f"python3 {REMOTE_SCRIPT_DIR}/{script_name}"
-        stdin, stdout, stderr = client.exec_command(cmd)
-        out = stdout.read().decode('utf-8', errors='ignore').strip()
-        err = stderr.read().decode('utf-8', errors='ignore').strip()
-        if out:
-            print(f"[SSH OUT] {out}")
-        if err:
-            print(f"[SSH ERR] {err}")
-    except Exception as e:
-        print(f"SSH-Ausführung fehlgeschlagen ({script_name}): {e}")
+    elif sel == "Diluent":
+        pyautogui.press('right', presses=9) 
+        pyautogui.press('enter')
+        pyautogui.press('tab', presses=7)
+        pyautogui.press('down', presses=2)
+        pyautogui.press('enter')
+        pyautogui.press('tab', presses=16)
+
+    elif sel == "CMR +":
+        pyautogui.press('right', presses=9) 
+        pyautogui.press('enter')
+        pyautogui.press('tab', presses=7)
+        pyautogui.press('down', presses=1)
+        pyautogui.press('enter')
+        pyautogui.press('tab', presses=16)
+
+    elif sel == "CMR -":
+        pyautogui.press('right', presses=9) 
+        pyautogui.press('enter')
+        pyautogui.press('tab', presses=7)
+        pyautogui.press('down', presses=1)
+        pyautogui.press('up', presses=1)
+        pyautogui.press('enter')
+        pyautogui.press('tab', presses=16)
+
+    elif sel == "MGP":
+        pyautogui.press('right', presses=9) 
+        pyautogui.press('enter')
+        pyautogui.press('tab', presses=7)
+        pyautogui.press('down', presses=4)
+        pyautogui.press('enter')
+        pyautogui.press('tab', presses=16)
+
+    elif sel == "Reagent":
+        pyautogui.press('right', presses=9) 
+        pyautogui.press('enter')
+        pyautogui.press('tab', presses=5)
+        pyautogui.press('down', presses=6)
+        pyautogui.press('enter')
+        pyautogui.press('tab', presses=16)
+    else:
+        print(f"Unbekannte Option: {sel}")
+
+def Beschriftungs_Sequenz(n: int):
+    """Wiederholt n-mal: Tab → Enter → Tab → Enter."""
+    for _ in range(n):
+        pyautogui.press('enter')
+        time.sleep(2.0)  # Wartezeit für Beschriftung
+        ssh_run(ssh_client, "bewegung_rfid.py")
+
+#Platzhalter für deine weiteren Start-Schritte ----
+
+
 
 # =========================
 # GUI
 # =========================
-
 root = tk.Tk()
 root.title("Start")
 
@@ -259,17 +265,6 @@ def launch_menu():
     menu_y = 50
     menu_win.geometry(f"{menu_width}x{menu_height}+{menu_x}+{menu_y}")
 
-    # 5) Reader auswählen (Platzhalter für deine Sequenz)
-    try:
-        reader_auswaehlen()
-    except Exception as e:
-        print(f"Fehler bei 'Reader auswählen': {e}")
-
-    # 6) Antenne auswählen (Platzhalter für deine Sequenz)
-    try:
-        antenne_auswaehlen()
-    except Exception as e:
-        print(f"Fehler bei 'Antenne auswählen': {e}")
 
     # ======= Menü-Elemente =======
 
@@ -326,7 +321,7 @@ def launch_menu():
         ssh_run(ssh_client, "bewegung_rfid.py")
 
         # Wiederholt Tab/Enter
-        run_repeated_tab_enter(n)
+        Beschriftungs_Sequenz(n)
 
         print("Sequenz abgeschlossen.")
 
