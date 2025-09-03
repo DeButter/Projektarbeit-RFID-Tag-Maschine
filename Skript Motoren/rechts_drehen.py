@@ -49,8 +49,8 @@ set_microstep(M2_M0, M2_M1, M2_M2, MICROSTEP_MODE)
 # Motoren aktivieren und Drehrichtung auf CCW (gegen Uhrzeigersinn) setzen
 GPIO.output(EN1, GPIO.LOW)   # Treiber einschalten
 GPIO.output(EN2, GPIO.LOW)
-GPIO.output(DIR1, CCW)       # beide Motoren auf CCW drehen
-GPIO.output(DIR2, CCW)
+GPIO.output(DIR1, CW)       # beide Motoren auf CCW drehen
+GPIO.output(DIR2, CW)
 
 # Schritte in Dauerschleife ausführen
 current_delay = start_delay

@@ -191,9 +191,10 @@ def Beschriftungs_Sequenz(n: int):
     """Wiederholt n-mal: Tab → Enter → Tab → Enter."""
     for _ in range(n):
         pyautogui.press('enter')
-        time.sleep(2.0)  # Wartezeit für Beschriftung
+        time.sleep(0.5)  # Wartezeit für Beschriftung
         ssh_run(ssh_client, "bewegung_rfid.py")
-
+        time.sleep(4.0) 
+    pyautogui.press('tab', presses=5)
 #Platzhalter für deine weiteren Start-Schritte ----
 
 
@@ -206,6 +207,56 @@ root.title("Start")
 
 screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
+
+# --- NEU: Hintergrundprozess starten & PID zurückgeben
+def ssh_start_bg(client: paramiko.SSHClient, script_name: str):
+    """
+    Startet remote 'python3 <script> &' und gibt die PID (int) zurück,
+    oder None bei Fehler.
+    """
+    if not client: 
+        print("Kein SSH-Client verfügbar.")
+        return None
+    try:
+        cmd = f"python3 {REMOTE_SCRIPT_DIR}/{script_name} >/dev/null 2>&1 & echo $!"
+        stdin, stdout, stderr = client.exec_command(cmd)
+        pid_str = stdout.read().decode('utf-8', errors='ignore').strip()
+        err = stderr.read().decode('utf-8', errors='ignore').strip()
+        if err:
+            print(f"[ssh_start_bg ERR] {err}")
+        try:
+            pid = int(pid_str)
+            print(f"[ssh_start_bg] {script_name} gestartet, PID={pid}")
+            return pid
+        except Exception:
+            print(f"[ssh_start_bg] Konnte PID nicht lesen: '{pid_str}'")
+            return None
+    except Exception as e:
+        print(f"[ssh_start_bg] Fehler: {e}")
+        return None
+
+# --- NEU: Prozess per PID beenden
+def ssh_kill_pid(client: paramiko.SSHClient, pid: int, signal="TERM"):
+    if not client or not pid:
+        return
+    try:
+        cmd = f"kill -{signal} {pid}"
+        client.exec_command(cmd)
+        print(f"[ssh_kill_pid] kill -{signal} {pid} gesendet")
+    except Exception as e:
+        print(f"[ssh_kill_pid] Fehler: {e}")
+
+# --- NEU: Sicherheitshalber nach Scriptnamen killen
+def ssh_pkill_script(client: paramiko.SSHClient, script_name: str):
+    if not client:
+        return
+    try:
+        cmd = f"pkill -f '{REMOTE_SCRIPT_DIR}/{script_name}'"
+        client.exec_command(cmd)
+        print(f"[ssh_pkill_script] pkill -f {script_name} gesendet")
+    except Exception as e:
+        print(f"[ssh_pkill_script] Fehler: {e}")
+
 
 def launch_menu():
     """Start 1:
@@ -281,17 +332,68 @@ def launch_menu():
     entry_count.insert(0, "1")
     entry_count.pack(pady=5)
 
-    # Pfeil-Buttons (SSH)
-    def send_left():
-        ssh_run(ssh_client, "links_drehen.py")
+    # ======== Pfeil-Buttons (gedrückt halten => drehen; loslassen => stoppen) ========
+    # Merker für laufenden Remote-Prozess (PID + welcher Scriptname)
+    current_pid = {"name": None, "pid": None}
 
-    def send_right():
-        ssh_run(ssh_client, "rechts_drehen.py")
+    def _stop_running_motion():
+        """Aktiven Drehprozess sicher beenden + motor_stop aufrufen."""
+        # 1) Falls ein PID bekannt ist: killen
+        if current_pid["pid"]:
+            ssh_kill_pid(ssh_client, current_pid["pid"], signal="TERM")
+            # optional nachhaken:
+            ssh_kill_pid(ssh_client, current_pid["pid"], signal="KILL")
+        # 2) Sicherheitshalber nach Scriptnamen killen
+        if current_pid["name"]:
+            ssh_pkill_script(ssh_client, current_pid["name"])
+        # 3) Motoren wirklich stoppen/stromlos
+        ssh_run(ssh_client, "motor_stop.py")
+        # 4) Merker leeren
+        current_pid["name"] = None
+        current_pid["pid"] = None
 
-    btn_left = tk.Button(menu_win, text="←", font=("Arial", 12, "bold"), command=send_left)
-    btn_right = tk.Button(menu_win, text="→", font=("Arial", 12, "bold"), command=send_right)
+    # HINWEIS: Deine Datei heißt vermutlich 'rechts_drehen.py' (ohne 's').
+    # In deinem Code steht 'rechts_drehen.py'. Bitte ggf. anpassen:
+    SCRIPT_LEFT  = "links_drehen.py"
+    SCRIPT_RIGHT = "rechts_drehen.py"   # <- falls deine Datei so heißt!
+
+    # --- LEFT Button
+    def on_left_press(event):
+        # Optik: gedrückt darstellen
+        btn_left.config(relief="sunken", state="active")
+        # Falls bereits was läuft: stoppen
+        _stop_running_motion()
+        # Start links drehen als Hintergrundprozess
+        pid = ssh_start_bg(ssh_client, SCRIPT_LEFT)
+        current_pid["name"] = SCRIPT_LEFT
+        current_pid["pid"]  = pid
+
+    def on_left_release(event):
+        btn_left.config(relief="raised", state="normal")
+        _stop_running_motion()
+
+    btn_left = tk.Button(menu_win, text="←", font=("Arial", 12, "bold"), width=4)
+    btn_left.bind("<ButtonPress-1>", on_left_press)
+    btn_left.bind("<ButtonRelease-1>", on_left_release)
     btn_left.pack(side=tk.LEFT, padx=20, pady=10)
+
+    # --- RIGHT Button
+    def on_right_press(event):
+        btn_right.config(relief="sunken", state="active")
+        _stop_running_motion()
+        pid = ssh_start_bg(ssh_client, SCRIPT_RIGHT)
+        current_pid["name"] = SCRIPT_RIGHT
+        current_pid["pid"]  = pid
+
+    def on_right_release(event):
+        btn_right.config(relief="raised", state="normal")
+        _stop_running_motion()
+
+    btn_right = tk.Button(menu_win, text="→", font=("Arial", 12, "bold"), width=4)
+    btn_right.bind("<ButtonPress-1>", on_right_press)
+    btn_right.bind("<ButtonRelease-1>", on_right_release)
     btn_right.pack(side=tk.LEFT, padx=20, pady=10)
+
 
     # Start-Button im Menü
     def start_sequence():
