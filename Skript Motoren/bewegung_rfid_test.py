@@ -166,3 +166,5 @@ if __name__ == "__main__":
     finally:
         # KEIN GPIO.cleanup(): sonst verschwinden die Pull-Ups an EN wieder
         pass
+
+    

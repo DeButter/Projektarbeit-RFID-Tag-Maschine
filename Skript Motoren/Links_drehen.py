@@ -83,3 +83,5 @@ except KeyboardInterrupt:
         GPIO.cleanup()
         # Alternativ könnte hier auch motor_stop.py aufgerufen werden:
         # import subprocess; subprocess.run(["python3", "motor_stop.py"])
+
+
