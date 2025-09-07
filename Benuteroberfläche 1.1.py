@@ -21,17 +21,17 @@ import pygetwindow as gw
 # =========================
 # Konfiguration
 # =========================
-APP_PATH = r"A:\RFID Software\RFID Software\RFID_Programmer.exe"
+APP_PATH = r"C:\Tag Maschine\Tag Maschine\RFID_Programmer.exe"
 APP_DIR = os.path.dirname(APP_PATH)
 
 RASPI_HOST = "192.168.0.26"
 RASPI_USER = "beat"
 RASPI_PASS = "1234"
-REMOTE_SCRIPT_DIR = "/home/beat/Documents"  # z.B. links_drehen.py, rechts_drehen.py, bewegung_rfid.py
+REMOTE_SCRIPT_DIR = "/home/beat/Documents"  # z.B. links_drehen.py, rechts_drehen.py, bewegung_rfid_test.py
 
 # PyAutoGUI Settings
 pyautogui.FAILSAFE = False     # Fail-Safe deaktivieren (sonst Abbruch bei Maus oben/links)
-pyautogui.PAUSE = 1.0     
+pyautogui.PAUSE = 0.0     
 #pyautogui.PAUSE = None    # gemächlich tippen
 
 # =========================
@@ -127,6 +127,10 @@ def reader_oeffnen_sequence():
 def run_selection_sequence(selection: str):
     """Tastenabfolge für den gewählten Reagenztyp (Stil wie im Screenshot)."""
     sel = selection.strip()
+    
+    old_pause = pyautogui.PAUSE
+    pyautogui.PAUSE = 0.5                                                           
+
     if sel == "Washbuffer":
         pyautogui.press('right', presses=9) 
         pyautogui.press('enter')
@@ -187,12 +191,15 @@ def run_selection_sequence(selection: str):
     else:
         print(f"Unbekannte Option: {sel}")
 
+    
+
 def Beschriftungs_Sequenz(n: int):
     """Wiederholt n-mal: Tab → Enter → Tab → Enter."""
     for _ in range(n):
+        time.sleep(3.0)
         pyautogui.press('enter')
-        time.sleep(4.5)  # Wartezeit für Beschriftung
-        ssh_run(ssh_client, "bewegung_rfid.py")
+        time.sleep(6)  # Wartezeit für Beschriftung
+        ssh_run(ssh_client, "bewegung_rfid_test.py")
         time.sleep(2.0)
         pyautogui.press('tab', presses=15)
         time.sleep(1.0)
@@ -427,8 +434,7 @@ def launch_menu():
         # Sequenz für Reagenztyp
         run_selection_sequence(selection)
 
-        # Bewegung auf dem Pi starten (SSH)
-        ssh_run(ssh_client, "bewegung_rfid.py")
+
 
         # Wiederholt Tab/Enter
         Beschriftungs_Sequenz(n)
