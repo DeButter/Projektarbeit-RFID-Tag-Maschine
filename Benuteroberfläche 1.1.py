@@ -196,18 +196,18 @@ def run_selection_sequence(selection: str):
 def Beschriftungs_Sequenz(n: int):
     """Wiederholt n-mal: Tab → Enter → Tab → Enter."""
     for _ in range(n):
-        time.sleep(3.0)
+        time.sleep(1.0)
         pyautogui.press('enter')
         time.sleep(6)  # Wartezeit für Beschriftung
         ssh_run(ssh_client, "bewegung_rfid_test.py")
         time.sleep(2.0)
         pyautogui.press('tab', presses=15)
         time.sleep(1.0)
-    pyautogui.press('tab', presses=5)
+    pyautogui.press('tab', presses=18)
 
     
-    ssh_start_bg(ssh_client, "Links_drehen.py")
-    time.sleep(5.0)              # Motor laufen lassen
+    ssh_start_bg(ssh_client, "links_drehen.py")
+    time.sleep(12.0)              # Motor laufen lassen
     ssh_run(ssh_client, "motor_stop.py")  # Motoren stoppen/stromlos
     print("Links-Drehen beendet. Motoren gestoppt.")
 #Platzhalter für deine weiteren Start-Schritte ----
