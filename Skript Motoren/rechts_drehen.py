@@ -28,9 +28,9 @@ for pin in (DIR1, STEP1, DIR2, STEP2,               # Alle relevanten Pins als O
             M1_M0, M1_M1, M1_M2,                        
             M2_M0, M2_M1, M2_M2,
             EN1, EN2):
-    GPIO.setup(pin, GPIO.OUT, initial=GPIO.LOW)           
+    GPIO.setup(pin, GPIO.OUT, initial=GPIO.LOW)     # Motoren zunächst deaktiviert lassen           
 
-GPIO.output(EN1, GPIO.HIGH)                         # Motoren zunächst deaktiviert lassen     
+GPIO.output(EN1, GPIO.HIGH)                         
 GPIO.output(EN2, GPIO.HIGH)
 
 
