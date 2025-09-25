@@ -16,7 +16,7 @@ EN2 = 6                                             # Enable für Motor 2
 CW, CCW = GPIO.HIGH, GPIO.LOW                       # Drehrichtungen (CW=im Uhrzeigersinn, CCW=gegen Uhrzeigersinn)
 
                                                     # Einstellungen
-MICROSTEP_MODE = 32                                 # 1/32-Schritte für beide Motoren
+MICROSTEP_MODE = 16                                 # 1/16-Schritte für beide Motoren
 start_delay   = 0.006                               # Verzögerung zu Beginn (Sekunden)
 min_delay     = 0.002                               # Verzögerung bei maximaler Geschwindigkeit
 accel_steps   = 60                                  # Anzahl Schritte für Beschleunigungsrampe

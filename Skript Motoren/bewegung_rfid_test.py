@@ -20,20 +20,20 @@ CW, CCW = GPIO.HIGH, GPIO.LOW               # Drehrichtungen (CW=im Uhrzeigersin
 BASE_SPR = 200                              # Vollschritte/Umdrehung
 
 # ============== Einstellungen / Defaults ==============
-DEFAULT_MICROSTEP_MODE = 32                     # Microstepping-Modus (1,2,4,8,16,32)
-DEFAULT_DEGREES       = 90                      # Winkel in Grad
-DEFAULT_OFFSET_SEC    = 0.5                     # Startverzögerung Motor1 (s)   
-DEFAULT_SPEED_PERCENT = 40                      # Geschwindigkeit 1..100 %
+DEFAULT_MICROSTEP_MODE = 16                     # Microstepping-Modus (1,2,4,8,16,32)
+DEFAULT_DEGREES       = 113                     # Winkel in Grad
+DEFAULT_OFFSET_SEC    = 0.3                     # Startverzögerung Motor1 (s)  Damit das Band gespannt wird. 
+DEFAULT_SPEED_PERCENT = 100                     # Geschwindigkeit 1..100 %
 DEFAULT_DITHER        = 0.0                     # Delay-Variation (z.B. 0.0002)
-DEFAULT_ACCEL_STEPS   = 220                     # Rampen-Schritte (größer=weicher)
-DEFAULT_DIR1          = "CW"                    # Drehrichtung Motor 1
+DEFAULT_ACCEL_STEPS   = 60                      # Rampen-Schritte (größer=weicher)
+DEFAULT_DIR1          = "CCW"                   # Drehrichtung Motor 1
 DEFAULT_DIR2          = "CCW"                   # Drehrichtung Motor 2
 
                                                 # Mapping von Geschwindigkeit (% 1..100) zu Step-Delays (Zeit zwischen Steps)   
-SLOW_START_DELAY = 0.014                        # langsamer Start
-SLOW_MIN_DELAY   = 0.0075                       # langsame Endgeschwindigkeit
-FAST_START_DELAY = 0.0060                       # schneller Start 
-FAST_MIN_DELAY   = 0.0035                       # schnelle Endgeschwindigkeit
+SLOW_START_DELAY = 0.010                        # langsamer Start
+SLOW_MIN_DELAY   = 0.0055                       # langsame Endgeschwindigkeit
+FAST_START_DELAY = 0.0035                       # schneller Start 
+FAST_MIN_DELAY   = 0.0015                       # schnelle Endgeschwindigkeit
 
 def map_speed_to_delays(speed_percent: int):                                        # Mapping von Geschwindigkeit (%) zu Step-Delays
     sp = max(1, min(100, int(speed_percent)))                                       # auf 1..100 begrenzen

@@ -257,11 +257,11 @@ def menue_starten():                                        # Diese Funktion wir
     """Start 1:
        - Software starten
        - Fenster finden/fokussieren/ausrichten
-       - (direkt danach) Reader öffnen (deine Sequenz)
+       - (direkt danach) Reader öffnen
+       - Antenne auswählen
        - SSH-Verbindung herstellen
        - Menü öffnen
-       - Reader auswählen (Platzhalter)
-       - Antenne auswählen (Platzhalter)
+
     """
     global ssh_client, process, menu_win, option_var, entry_count, program_window_title
 
